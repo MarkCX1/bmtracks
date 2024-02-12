@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adin Ross Live Stream</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #222; /* Dark background color */
+            font-family: Arial, sans-serif; /* Use Arial font */
+        }
+        .container {
+            display: flex;
+            height: 100%;
+        }
+        .video-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        .video-container iframe {
+            border: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .chat-container {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px; /* Adjust width as needed */
+            height: calc(100% - 300px); /* Subtract space for bottom-right box */
+            overflow: hidden;
+        }
+        .bottom-right-content {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 300px; /* Adjust width as needed */
+            height: 500px; /* Adjust height as needed */
+            background-color: #333; /* Example bottom right content background color */
+            color: #fff; /* Example text color */
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+        }
+        .crypto-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .crypto-icon {
+            width: 50px; /* Adjust icon width */
+            height: 50px; /* Adjust icon height */
+            margin-right: 15px; /* Spacing between icon and text */
+        }
+        .crypto-name {
+            font-weight: bold;
+        }
+        .balance {
+            margin: 5px 0;
+        }
+        .usd-value {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .refresh-button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .refresh-button:hover {
+            background-color: #45a049; /* Darker green */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Video player -->
+        <div class="video-container">
+            <iframe id="video-iframe" src="https://player.kick.com/bossmanjack?muted=false&allowfullscreen=false" frameborder="0" scrolling="no"></iframe>
+        </div>
+
+        <!-- Chat box -->
+        <div class="chat-container">
+            <iframe src="https://chat-overlay.matinaniss.com/?channel=bossmanjack&sevenTVCosmeticsEnabled=true&sevenTVEmotesEnabled=true&theme=dark&textShadow=small&textSize=medium&animation=fade&showPinEnabled=true&textBackgroundEnabled=false&textBackgroundWidth=min" frameborder="0" scrolling="no"></iframe>
+        </div>
+    </div>
+    
+    <!-- Bottom right content -->
+    <div class="bottom-right-content">
+        <h2>Wallet Balance</h2>
+        
+        <div class="crypto-container">
+            <img class="crypto-icon" src="https://loutre.blockchair.io/assets/svg/chains/bitcoin.svg" alt="BTC Icon">
+            <div class="crypto-name">Bitcoin</div>
+        </div>
+        <p class="balance" id="btc-balance">Loading...</p>
+        <p class="usd-value" id="btc-usd">USD Value: Loading...</p>
+
+        <div class="crypto-container">
+            <img class="crypto-icon" src="https://loutre.blockchair.io/assets/svg/chains/litecoin.svg" alt="LTC Icon">
+            <div class="crypto-name">Litecoin</div>
+        </div>
+        <p class="balance" id="ltc-balance">Loading...</p>
+        <p class="usd-value" id="ltc-usd">USD Value: Loading...</p>
+
+        <div class="crypto-container">
+            <img class="crypto-icon" src="https://loutre.blockchair.io/assets/svg/chains/ethereum.svg" alt="ETH Icon">
+            <div class="crypto-name">Ethereum</div>
+        </div>
+        <p class="balance" id="eth-balance">Loading...</p>
+        <p class="usd-value" id="eth-usd">USD Value: Loading...</p>
+
+        <button class="refresh-button" onclick="forceRefresh()">Refresh</button>
+    </div>
+
+    <script>
+        // Function to fetch Bitcoin balance
+        function getBitcoinBalance(bitcoinAddress) {
+            const apiUrl = `https://blockchain.info/balance?active=${bitcoinAddress}`;
+            return fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const finalBalance = data[bitcoinAddress]?.final_balance || 0;
+                    return finalBalance / 10**8; // Convert satoshis to BTC
+                })
+                .catch(error => {
+                    console.error('Error fetching BTC balance:', error);
+                    return 0;
+                });
+        }
+
+        // Function to fetch Litecoin balance
+        function getLitecoinBalance(litecoinAddress) {
+            const apiUrl = `https://api.blockchair.com/litecoin/dashboards/address/${litecoinAddress}`;
+            return fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    return data.data[litecoinAddress]?.address?.balance || 0;
+                })
+                .catch(error => {
+                    console.error('Error fetching LTC balance:', error);
+                    return 0;
+                });
+        }
+
+        // Function to fetch Ethereum balance
+        function getEthereumBalance(ethereumAddress) {
+            const apiUrl = `https://api.etherscan.io/api?module=account&action=balance&address=${ethereumAddress}&tag=latest&apikey=YourApiKeyToken`;
+            return fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    return data.result / 10**18; // Convert wei to ETH
+                })
+                .catch(error => {
+                    console.error('Error fetching ETH balance:', error);
+                    return 0;
+                });
+        }
+
+        // Function to fetch USD conversion rate for BTC
+        function getBitcoinUSDConversion() {
+            const apiUrl = 'https://api.coindesk.com/v1/bpi/currentprice.json';
+            return fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    return data.bpi.USD.rate_float;
+                })
+                .catch(error => {
+                    console.error('Error fetching BTC conversion rate:', error);
+                    return 0;
+                });
+        }
+
+        // Function to fetch USD conversion rate for LTC
+        function getLitecoinUSDConversion() {
+            const apiUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=litecoin&vs_currencies=usd';
+            return fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    return data.litecoin.usd;
+                })
+                .catch(error => {
+                    console.error('Error fetching LTC conversion rate:', error);
+                    return 0;
+                });
+        }
+
+        // Function to fetch USD conversion rate for ETH
+        function getEthereumUSDConversion() {
+            const apiUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd';
+            return fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    return data.ethereum.usd;
+                })
+                .catch(error => {
+                    console.error('Error fetching ETH conversion rate:', error);
+                    return 0;
+                });
+        }
+
+        // Function to update balances and USD values
+        function updateBalancesAndUSD() {
+            // Bitcoin address
+            const btcAddress = 'bc1qykj09rzyxu64w7alr0xslu05ez0vfvud4nh5pw';
+            // Litecoin address
+            const ltcAddress = 'MC8TiBEsnQVjxbvLtTsUXjTBZTQaR8fe8X';
+            // Ethereum address
+            const ethAddress = '0x57acb211e9568b0f82fbf28e9aee96a2eb14fd6f';
+
+            // Fetch BTC balance
+            getBitcoinBalance(btcAddress)
+                .then(btcBalance => {
+                    document.getElementById('btc-balance').textContent = `${btcBalance.toFixed(8)} BTC`;
+                    // Fetch BTC USD conversion
+                    getBitcoinUSDConversion().then(btcUSD => {
+                        document.getElementById('btc-usd').textContent = `USD Value: $${(btcBalance * btcUSD).toFixed(2)}`;
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('btc-balance').textContent = 'Error fetching balance';
+                });
+
+            // Fetch LTC balance
+            getLitecoinBalance(ltcAddress)
+                .then(ltcBalance => {
+                    document.getElementById('ltc-balance').textContent = `${ltcBalance.toFixed(8)} LTC`;
+                    // Fetch LTC USD conversion
+                    getLitecoinUSDConversion().then(ltcUSD => {
+                        document.getElementById('ltc-usd').textContent = `USD Value: $${(ltcBalance * ltcUSD).toFixed(2)}`;
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('ltc-balance').textContent = 'Error fetching balance';
+                });
+
+            // Fetch ETH balance
+            getEthereumBalance(ethAddress)
+                .then(ethBalance => {
+                    document.getElementById('eth-balance').textContent = `${ethBalance.toFixed(8)} ETH`;
+                    // Fetch ETH USD conversion
+                    getEthereumUSDConversion().then(ethUSD => {
+                        document.getElementById('eth-usd').textContent = `USD Value: $${(ethBalance * ethUSD).toFixed(2)}`;
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('eth-balance').textContent = 'Error fetching balance';
+                });
+        }
+
+        // Function to force refresh balances and USD values
+        function forceRefresh() {
+            updateBalancesAndUSD();
+        }
+
+        // Update balances and USD values initially
+        updateBalancesAndUSD();
+
+        // Set interval to refresh balances and USD values every minute
+        setInterval(updateBalancesAndUSD, 60000);
+    </script>
+</body>
+</html>
